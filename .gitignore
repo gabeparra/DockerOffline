@@ -1,0 +1,6 @@
+# Downloaded Docker .deb packages (fetched by scripts/download-debs.sh)
+packages/
+
+# Transfer bundles built by scripts/create-transfer-bundle.sh
+dist/
+*.tar.gz
