@@ -2,11 +2,15 @@
 
 Scripts that download Docker Engine and every dependency as `.deb` files on a connected machine, pack them into one archive, and install them on an air-gapped Ubuntu host with no network at all. The install also drops in a daemon config that keeps Docker's networks out of `172.16.0.0/12`.
 
+**Status:** `Maintained` - tested on Ubuntu 24.04 amd64 with Docker Engine 29.10.1.
+
 **Scope:** Ubuntu only (apt, Docker's Ubuntu repository). Tested on Ubuntu 24.04 amd64 with Docker Engine 29.10.1 (see [Testing](#testing)). Other Ubuntu releases should work but are not tested; other distros are not supported by these scripts.
 
 System-wide install (not under a single user's home): packages place binaries under `/usr`, config under `/etc`, data under `/var/lib/docker` by default.
 
-## 1. Online machine (same Ubuntu release and architecture as the offline VM)
+## Quickstart
+
+### 1. Online machine (same Ubuntu release and architecture as the offline VM)
 
 1. Add Docker's apt repository (official steps: [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/)). The bundled script does the same and also clears old `docker.list` + `docker.gpg` entries that conflict with `docker.sources` + `docker.asc`. It checks the key's fingerprint, so it needs `gnupg` installed:
 
@@ -36,7 +40,7 @@ System-wide install (not under a single user's home): packages place binaries un
    ./scripts/create-transfer-bundle.sh
    ```
 
-## 2. Offline VM
+### 2. Offline VM
 
 Copy this repo (`packages/`, `scripts/` and `config/`) to the offline VM, or extract the transfer tarball:
 
@@ -115,3 +119,12 @@ The test containers do not run systemd, so starting `docker.service` and the add
 **`E: Conflicting values set for option Signed-By ... docker.gpg != docker.asc`**: Two Docker repo definitions are active (often an old `docker.list` using `docker.gpg` plus a new `docker.sources` using `docker.asc`). Remove the duplicates or run `sudo ./scripts/setup-docker-apt-repo.sh`, which clears Docker's apt sources/key files and recreates a single `docker.sources`.
 
 **`NO_PUBKEY ...` / repository is not signed**: Usually fixed after the conflict above; the key file must match `Signed-By` in the only remaining Docker source. Re-run `setup-docker-apt-repo.sh` if needed.
+
+## Stack & Architecture
+
+- **Stack:** Bash (`apt`, `dpkg`, `gnupg`, `sha256sum`), Ubuntu Docker Engine `.deb` packages, and container-based end-to-end verification (`podman` or `docker`).
+- **Layout:** `scripts/` (repo setup, `.deb` downloader, bundle packer, offline installer), `config/daemon.json` (non-overlapping Docker address pools), `tests/e2e.sh` (air-gapped install tests), and `.github/workflows/lint.yml` (`shellcheck`).
+
+## License
+
+MIT - see [LICENSE](./LICENSE).
